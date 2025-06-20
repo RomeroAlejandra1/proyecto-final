@@ -1,12 +1,26 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from datetime import date, datetime, timedelta
+from datetime import datetime
+
+# El nuevo cambio que hice es agregarle una clase padre
+class Persona:
+    def __init__(self, nombre, edad, genero):
+        self.nombre = nombre
+        self.edad = edad
+        self.genero = genero
+
+# Y una clase hija
+class Trabajador(Persona):
+    def __init__(self, nombre, edad, genero, numero_trabajador, puesto):
+        super().__init__(nombre, edad, genero)
+        self.numero_trabajador = numero_trabajador
+        self.puesto = puesto
 
 class Hospital:
     def __init__(self, root):
         self.root = root
-        self.root.title("CONTROL DE PERSONAL EN UN HOSPITAL")
+        self.root.title("CONTROL DE PERSONAL HOSPITALARIO")
         self.root.config(bg="lightblue")
         self.root.geometry("800x450") 
 
@@ -88,8 +102,9 @@ class Hospital:
                 if trabajador["numero_trabajador"] == numero:
                     messagebox.showwarning("Duplicado", "Ya hay un trabajador existente con el mismo ID.")
                     return
-
-            self.datos_trabajadores.append(datos)
+            # Use la clase hija Trabajador
+            nuevo_trabajador = Trabajador( self nombre, edad, genero, numero, puesto)
+            self.datos_trabajadores.append(nuevo_trabajador)
             messagebox.showinfo("Registro exitoso", "Datos guardados correctamente")
             nombre_entry.delete(0, tk.END)
             edad_entry.delete(0, tk.END)
