@@ -103,7 +103,7 @@ class Hospital:
                     messagebox.showwarning("Duplicado", "Ya hay un trabajador existente con el mismo ID.")
                     return
             # Use la clase hija Trabajador
-            nuevo_trabajador = Trabajador( self nombre, edad, genero, numero, puesto)
+            nuevo_trabajador = Trabajador(nombre, edad, genero, numero, puesto)
             self.datos_trabajadores.append(nuevo_trabajador)
             messagebox.showinfo("Registro exitoso", "Datos guardados correctamente")
             nombre_entry.delete(0, tk.END)
