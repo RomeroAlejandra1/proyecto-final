@@ -3,20 +3,6 @@ from tkinter import messagebox
 from tkinter import ttk
 from datetime import datetime
 
-# El nuevo cambio que hice es agregarle una clase padre
-class Persona:
-    def __init__(self, nombre, edad, genero):
-        self.nombre = nombre
-        self.edad = edad
-        self.genero = genero
-
-# Y una clase hija
-class Trabajador(Persona):
-    def __init__(self, nombre, edad, genero, numero_trabajador, puesto):
-        super().__init__(nombre, edad, genero)
-        self.numero_trabajador = numero_trabajador
-        self.puesto = puesto
-
 class Hospital:
     def __init__(self, root):
         self.root = root
@@ -39,12 +25,16 @@ class Hospital:
         self.saludo()
 
     def crear_menu(self):
-        tk.Button(self.menu_lateral, text="INICIO", font="Arial 14 bold", command=self.saludo, width=20).pack(pady=10)
-        tk.Button(self.menu_lateral, text="TRABAJADOR", font="Arial 14 bold", command=self.trabajador, width=20).pack(pady=10)
-        tk.Button(self.menu_lateral, text="TURNO", font="Arial 14 bold", command=self.turno, width=20).pack(pady=10)
-        tk.Button(self.menu_lateral, text="ASISTENCIAS", font="Arial 14 bold", command=self.asistencias, width=20).pack(pady=10)
-        tk.Button(self.menu_lateral, text="VACACIONES", font="Arial 14 bold", command=self.periodo_vacacional, width=20).pack(pady=10)
-        tk.Button(self.menu_lateral, text="HISTORIAL", font="Arial 14 bold", command=self.imprimir, width=20).pack(pady=10)
+         botones = [
+            ("INICIO", self.saludo),
+            ("TRABAJADOR", self.trabajador),
+            ("TURNO", self.turno),
+            ("FALTAS", self.faltas),
+            ("VACACIONES", self.vacaciones),
+            ("HISTORIAL", self.mostrar_historial)
+        ]
+        for texto, comando in botones:
+            tk.Button(self.menu_lateral, text=texto, font="Arial 14 bold", command=comando, width=20).pack(pady=10)
 
     def limpiar_area_dinamica(self):
         for widget in self.area_dinamica.winfo_children():
@@ -52,25 +42,23 @@ class Hospital:
 
     def saludo(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="Bienvenido al sistema de control del hospital", font=("Arial", 16, "bold")).pack(pady=20)
+        tk.Label(self.area_dinamica, text="Bienvenido al sistema de control del hospital",bg="#B3C2F5", font=("Arial", 16, "bold")).pack(pady=20)
         tk.Button(self.area_dinamica, text="Mostrar saludo",
                   command=lambda: messagebox.showinfo("Saludo", "¡Hola!, ¡Qué alegría verte de nuevo!")).pack()
 
     def trabajador(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="Datos del trabajador", font=("Arial", 14, "bold")).pack(pady=10)
+        tk.Label(self.area_dinamica, text="DATOS DEL TRABAJADOR", bg="#FCBDF9", font=("Arial", 14, "bold")).pack(pady=10)
+        
+        campos_entry = {}
 
-        tk.Label(self.area_dinamica, text="Nombre:").pack(anchor="w", padx=100)
-        nombre_entry = tk.Entry(self.area_dinamica, width=40)
-        nombre_entry.pack()
+        etiquetas_campos = ["Nombre", "Edad", "ID", "Teléfono", "Correo electrónico", "Domicilio"]
 
-        tk.Label(self.area_dinamica, text="Edad:").pack(anchor="w", padx=100)
-        edad_entry = tk.Entry(self.area_dinamica, width=40)
-        edad_entry.pack()
-
-        tk.Label(self.area_dinamica, text="ID:").pack(anchor="w", padx=100)
-        num_trab_entry = tk.Entry(self.area_dinamica, width=40)
-        num_trab_entry.pack()
+        for etiqueta in etiquetas_campos:
+            tk.Label(self.area_dinamica, text=f"{etiqueta}:").pack(anchor="w", padx=100)
+            entrada = tk.Entry(self.area_dinamica, width=40)
+            entrada.pack()
+            campos_entry[etiqueta] = entrada
 
         tk.Label(self.area_dinamica, text="Género:").pack(anchor="w", padx=100)
         genero_combo = ttk.Combobox(self.area_dinamica, values=["Masculino", "Femenino"], width=37)
@@ -81,44 +69,60 @@ class Hospital:
         puesto_combo.pack()
 
         def guardar_datos():
-            numero = num_trab_entry.get()
-            if not numero.isdigit():
+             nombre = campos_entry["Nombre"].get()
+            edad = campos_entry["Edad"].get()
+            id_trabajador = campos_entry["ID"].get()
+            telefono = campos_entry["Teléfono"].get()
+            correo = campos_entry["Correo electrónico"].get()
+            domicilio = campos_entry["Domicilio"].get()
+            genero = genero_combo.get()
+            puesto = puesto_combo.get()
+
+            if not all([nombre, edad, id_trabajador, telefono, correo, genero, puesto]):
+                messagebox.showwarning("Error", "Por favor llena todos los espacios.")
+                return
+
+            if not id_trabajador.isdigit():
                 messagebox.showerror("Error", "El ID solo puede tener números.")
                 return
-
-            datos = {
-                "nombre": nombre_entry.get(),
-                "edad": edad_entry.get(),
-                "numero_trabajador": numero,
-                "genero": genero_combo.get(),
-                "puesto": puesto_combo.get()
-            }
-
-            if not all(datos.values()):
-                messagebox.showwarning("Datos vacíos", "Por favor llene todos los apartados.")
+            if not edad.isdigit():
+                messagebox.showerror("Error", "La edad debe ser numérica.")
+                return
+            if not telefono.isdigit() or len(telefono) < 7:
+                messagebox.showerror("Error", "Número de teléfono inválido.")
                 return
 
-            for trabajador in self.datos_trabajadores:
-                if trabajador["numero_trabajador"] == numero:
-                    messagebox.showwarning("Duplicado", "Ya hay un trabajador existente con el mismo ID.")
+            nuevo_trabajador_data = {
+                "nombre": nombre,
+                "edad": edad,
+                "ID": id_trabajador,
+                "genero": genero,
+                "puesto": puesto,
+                "telefono": telefono,
+                "correo": correo,
+                "domicilio": domicilio,
+            }
+
+            for trabajador_data in self.datos_trabajadores:
+                if trabajador_data["ID"] == id_trabajador:
+                    messagebox.showwarning("Duplicado", "Ya existe un trabajador con el mismo ID")
                     return
-            # Use la clase hija Trabajador
-            nuevo_trabajador = Trabajador(nombre, edad, genero, numero, puesto)
-            self.datos_trabajadores.append(nuevo_trabajador)
-            messagebox.showinfo("Registro exitoso", "Datos guardados correctamente")
-            nombre_entry.delete(0, tk.END)
-            edad_entry.delete(0, tk.END)
-            num_trab_entry.delete(0, tk.END)
+
+            self.datos_trabajadores.append(nuevo_trabajador_data)
+            messagebox.showinfo("Registrado", "Datos guardados correctamente")
+
+            for entry in campos_entry.values():
+                entry.delete(0, tk.END)
             genero_combo.set('')
             puesto_combo.set('')
 
-        tk.Button(self.area_dinamica, text="Guardar", command=guardar_datos, bg="light blue", fg="white", font=("Arial", 12, "bold")).pack(pady=20)
+        tk.Button(self.area_dinamica, text="Guardar", command=guardar_datos, bg="light blue", fg="black", font=("Arial", 12, "bold")).pack(pady=20)
 
     def turno(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="TURNO DEL TRABAJADOR", font=("Arial", 14, "bold")).pack(pady=10)
+        tk.Label(self.area_dinamica, text="TURNO DEL TRABAJADOR",bg="#A2EFFD", font=("Arial", 14, "bold")).pack(pady=10)
 
-        tk.Label(self.area_dinamica, text="Número de trabajador:").pack(anchor="w", padx=100)
+        tk.Label(self.area_dinamica, text="ID de trabajador:").pack(anchor="w", padx=100)
         num_trab_entry = tk.Entry(self.area_dinamica, width=40)
         num_trab_entry.pack()
 
@@ -126,100 +130,83 @@ class Hospital:
         turno_combo = ttk.Combobox(self.area_dinamica, values=["Matutino (6:00-14:00)", "Vespertino (14:00-22:00)", "Nocturno (22:00-6:00)"], width=37)
         turno_combo.pack()
 
-        def guardar_turno():
+    def guardar_turno():
             numero = num_trab_entry.get()
             turno = turno_combo.get()
 
             if not numero or not turno:
                 messagebox.showwarning("Datos vacíos", "Por favor llene todos los apartados.")
                 return
+            
+            trabajador_existe = False
+            for t in self.datos_trabajadores:
+                if t["ID"] == id_trabajador:
+                    trabajador_existe = True
+                    break
 
-            if numero not in [t["numero_trabajador"] for t in self.datos_trabajadores]:
+            if not trabajador_existe:
                 messagebox.showerror("Error", "Este trabajador no está registrado.")
                 return
 
-            found = False
-            for i, t in enumerate(self.seleccionar_turnos):
-                if t["numero_trabajador"] == numero:
-                    self.seleccionar_turnos[i]["turno"] = turno
-                    found = True
-                    break
-            if not found:
-                self.seleccionar_turnos.append({"numero_trabajador": numero, "turno": turno})
+            anterior_turno = self.turnos.get(id_trabajador, None)
+            self.turnos[id_trabajador] = turno
+            mensaje = f"Turno actualizado de '{anterior_turno}' a '{turno}'" if anterior_turno else f"Turno '{turno}' asignado al trabajador {id_trabajador}."
+            messagebox.showinfo("Turno guardado", mensaje)
 
-            messagebox.showinfo("Turno guardado", f"Turno '{turno}' asignado al trabajador {numero}.")
-            num_trab_entry.delete(0, tk.END)
+            id_trabajador_entry.delete(0, tk.END)
             turno_combo.set('')
 
         tk.Button(self.area_dinamica, text="Guardar turno", command=guardar_turno, bg="light pink", fg="black", font=("Arial", 12, "bold")).pack(pady=20)
 
-    def asistencias(self):
+    def faltas(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="REGISTRO DE ASISTENCIAS", font=("Arial", 14, "bold")).pack(pady=10)
+        tk.Label(self.area_dinamica, text="REGISTRO DE FALTAS", bg="#CAA2FD", font=("Arial", 14, "bold")).pack(pady=10)
 
-        tk.Label(self.area_dinamica, text="ID del Empleado:").pack(anchor="w", padx=100)
-        id_empleado_entry = tk.Entry(self.area_dinamica, width=40)
-        id_empleado_entry.pack()
+        tk.Label(self.area_dinamica, text="ID de trabajador:").pack(anchor="w", padx=100)
+        id_trabajador_entry = tk.Entry(self.area_dinamica, width=40)
+        id_trabajador_entry.pack()
 
-        tk.Label(self.area_dinamica, text="Fecha (DD-MM-AAAA):").pack(anchor="w", padx=100)
-        fecha_entry = tk.Entry(self.area_dinamica, width=40)
-        fecha_entry.pack()
-        fecha_entry.insert(0, datetime.now().strftime("%d-%m-%Y")) 
+        tk.Label(self.area_dinamica, text="Selecciona la cantidad de faltas:").pack(anchor="w", padx=100)
+        faltas_combo = ttk.Combobox(self.area_dinamica, values=["0 días", "1 día", "2 días", "3 días", "4 días", "5 días"], width=37)
+        faltas_combo.pack()
 
-        tk.Label(self.area_dinamica, text="Estado del Trabajador:").pack(anchor="w", padx=100)
-        estado_combo = ttk.Combobox(self.area_dinamica, values=["Presente", "Ausente"], width=37)
-        estado_combo.pack()
+    def registrar_falta():
+            id_trabajador = id_trabajador_entry.get()
+            faltas_str = faltas_combo.get()
 
-        def registrar_asistencia():
-            empleado_id = id_empleado_entry.get()
-            fecha_str = fecha_entry.get()
-            estado = estado_combo.get()
-
-            if not empleado_id or not fecha_str or not estado:
-                messagebox.showwarning("Datos vacíos", "Por favor llene todos los apartados.")
+            if not id_trabajador.isdigit():
+                messagebox.showerror("Error", "ID de trabajador incorrecto.")
                 return
 
-            if not empleado_id.isdigit():
-                messagebox.showerror("Error", "El ID del empleado deben ser numéros.")
-                return
+            trabajador_existe = False
+            for t in self.datos_trabajadores:
+                if t["ID"] == id_trabajador:
+                    trabajador_existe = True
+                    break
 
-            if empleado_id not in [t["numero_trabajador"] for t in self.datos_trabajadores]:
-                messagebox.showerror("Error", "Este ID de empleado no está registrado.")
+            if not trabajador_existe:
+                messagebox.showerror("No existe", "Este trabajador no está registrado.")
                 return
 
             try:
-                datetime.strptime(fecha_str, "%d-%m-%Y")
+                faltas_num = int(faltas_str.split()[0])
             except ValueError:
-                messagebox.showerror("Error", "Registre correctamente la fecha")
+                messagebox.showerror("Error", "Selecciona una cantidad válida de faltas.")
                 return
 
-            if empleado_id not in self.registro_asistencia:
-                self.registro_asistencia[empleado_id] = []
+            self.faltas_registradas[id_trabajador] = self.faltas_registradas.get(id_trabajador, 0) + faltas_num
+            messagebox.showinfo("Falta registrada", f"{faltas_num} falta(s) registrada(s) para el trabajador {id_trabajador}.")
 
-            for record in self.registro_asistencia[empleado_id]:
-                if record["fecha"] == fecha_str:
-                    messagebox.showwarning("Error, Asistencia duplicada")
-                    return
+            id_trabajador_entry.delete(0, tk.END)
+            faltas_combo.set('')
 
-            self.registro_asistencia[empleado_id].append({
-                "fecha": fecha_str,
-                "estado": estado
-            })
-
-            messagebox.showinfo("Registro exitoso", f"Asistencia registrada para el empleado {empleado_id} el {fecha_str} ({estado}).")
-
-            id_empleado_entry.delete(0, tk.END)
-            fecha_entry.delete(0, tk.END)
-            fecha_entry.insert(0, datetime.now().strftime("%d-%m-%Y")) 
-            estado_combo.set('')
-
-        tk.Button(self.area_dinamica, text="Registrar Asistencia", command=registrar_asistencia, bg="#007BFF", fg="white", font=("Arial", 12, "bold")).pack(pady=20)
-
-    def periodo_vacacional(self):
+        tk.Button(self.area_dinamica, text="Registrar falta", command=registrar_falta, bg="lightblue", fg="black", font=("Arial", 12, "bold")).pack(pady=20)
+   
+    def vacaciones(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="PERIODO VACACIONAL", font=("Arial", 14, "bold")).pack(pady=10)
+        tk.Label(self.area_dinamica, text="PERIODO VACACIONAL", bg="#A2FDB6", font=("Arial", 14, "bold")).pack(pady=10)
 
-        tk.Label(self.area_dinamica, text="Número de trabajador:").pack(anchor="w", padx=100)
+        tk.Label(self.area_dinamica, text="ID de trabajador:").pack(anchor="w", padx=100)
         num_trab_entry = tk.Entry(self.area_dinamica, width=40)
         num_trab_entry.pack()
 
@@ -246,58 +233,47 @@ class Hospital:
                 messagebox.showwarning("Datos vacíos", "Por favor llene todos los apartados.")
                 return
 
-            self.gestionar_vacaciones[numero] = periodo
+            self.periodos_vacacionales[id_trabajador] = periodo
             messagebox.showinfo("Periodo guardado", f"Periodo '{periodo}' registrado para el trabajador {numero}.")
-            num_trab_entry.delete(0, tk.END)
+            
+            id_trabajador_entry.delete(0, tk.END)
             periodo_combo.set('')
 
         tk.Button(self.area_dinamica, text="Guardar periodo", command=guardar_periodo, bg="#28A745", fg="white", font=("Arial", 12, "bold")).pack(pady=20)
 
-    def imprimir(self):
+    def mostrar_historial(self):
         self.limpiar_area_dinamica()
-        tk.Label(self.area_dinamica, text="LISTA DE TRABAJADORES", font=("Arial", 16, "bold")).pack(pady=10)
+        tk.Label(self.area_dinamica, text="LISTA DE TRABAJADORES",bg="#FDECA2", font=("Arial", 16, "bold")).pack(pady=10)
 
         if not self.datos_trabajadores:
-            tk.Label(self.area_dinamica, text="Aún no hay datos de trabajadores registrados.", font=("Arial", 12)).pack(pady=10)
-            return
+             text_area.insert("1.0", "Aún no hay datos de trabajadores registrados.")
+        else:
+            texto_impresion = "Trabajadores registrados:\n\n"
+            trabajadores_ordenados = sorted(self.datos_trabajadores, key=lambda x: x["ID"])
 
-        trabajadores_ordenados = sorted(self.datos_trabajadores, key=lambda x: x["numero_trabajador"])
+            for trabajador_data in trabajadores_ordenados:
+                id_trabajador = trabajador_data["ID"]
 
-        columns = ("ID", "Nombre", "Puesto", "Turno", "Vacaciones", "Asistencias Registradas")
-        self.tree = ttk.Treeview(self.area_dinamica, columns=columns, show="headings")
-        self.tree.pack(fill="both", expand=True, padx=10, pady=10)
+                turno = self.turnos.get(id_trabajador, "No asignado")
+                faltas = self.faltas_registradas.get(id_trabajador, 0)
+                periodo = self.periodos_vacacionales.get(id_trabajador, "No asignado")
 
-        for col in columns:
-            self.tree.heading(col, text=col, anchor=tk.W)
-            self.tree.column(col, width=100)
+                texto_impresion += (f"Nombre: {trabajador_data['nombre']}\n"
+                                    f"Edad: {trabajador_data['edad']}\n"
+                                    f"ID de trabajador: {id_trabajador}\n"
+                                    f"Género: {trabajador_data['genero']}\n"
+                                    f"Puesto: {trabajador_data['puesto']}\n"
+                                    f"Teléfono: {trabajador_data.get('telefono', 'No registrado')}\n"
+                                    f"Correo: {trabajador_data.get('correo', 'No registrado')}\n"
+                                    f"Domicilio: {trabajador_data.get('domicilio', 'No registrado')}\n"
+                                    f"Turno: {turno}\n"
+                                    f"Faltas: {faltas} días\n"
+                                    f"Periodo vacacional: {periodo}\n\n"
+                                    + "="*50 + "\n\n")
 
-        self.tree.column("ID", width=50)
-        self.tree.column("Nombre", width=150)
-        self.tree.column("Puesto", width=100)
-        self.tree.column("Turno", width=150)
-        self.tree.column("Vacaciones", width=120)
-        self.tree.column("Asistencias Registradas", width=200)
+            text_area.insert("1.0", texto_impresion)
 
-        for persona in trabajadores_ordenados:
-            numero = persona["numero_trabajador"]
-            turno = next((t["turno"] for t in self.seleccionar_turnos if t["numero_trabajador"] == numero), "Sin turno asignado")
-            periodo_vacacional = self.gestionar_vacaciones.get(numero, "No asignado")
-
-            asistencias_info = []
-            if numero in self.registro_asistencia:
-                for record in self.registro_asistencia[numero]:
-                    asistencias_info.append(f"{record['fecha']} ({record['estado']})")
-
-            asistencias_str = ", ".join(asistencias_info) if asistencias_info else "Ninguna"
-
-            self.tree.insert("", "end", values=(
-                persona['numero_trabajador'],
-                persona['nombre'],
-                persona['puesto'],
-                turno,
-                periodo_vacacional,
-                asistencias_str
-            ))
+        text_area.config(state="disabled")
 
 if __name__ == "__main__":
     ventana = tk.Tk()
